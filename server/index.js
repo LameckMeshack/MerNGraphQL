@@ -9,6 +9,9 @@ const connectDB = require("./config/db");
 const port = process.env.PORT || 8000;
 
 const app = express();
+//allow cross origin requests
+app.use(cors());
+
 // Connect to MongoDB
 connectDB();
 app.use(
