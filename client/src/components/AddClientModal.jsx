@@ -3,6 +3,7 @@ import { useState } from "react";
 import { FaUser } from "react-icons/fa";
 import { GET_CLIENTS } from "../queries/ClientQueries";
 import { ADD_CLIENT } from "./mutations/clientMutations";
+import { Spinner } from "./Spinner";
 
 export const AddClientModal = () => {
   const [name, setName] = useState("");
@@ -34,6 +35,9 @@ export const AddClientModal = () => {
     setEmail("");
     setPhone("");
   };
+  if (loading) {
+    return <Spinner />;
+  }
   return (
     <>
       <button
