@@ -8,10 +8,12 @@ const {
   GraphQLSchema,
   GraphQLString,
   GraphQLList,
+  GraphQLNonNull,
+  GraphQLEnumType,
 } = require("graphql");
 
 //Defining Client Type
-const clientType = new GraphQLObjectType({
+const ClientType = new GraphQLObjectType({
   name: "Client",
   fields: () => ({
     id: { type: GraphQLID },
@@ -21,7 +23,7 @@ const clientType = new GraphQLObjectType({
   }),
 });
 // Defining Project Type
-const projectType = new GraphQLObjectType({
+const ProjectType = new GraphQLObjectType({
   name: "Project",
   fields: () => ({
     id: { type: GraphQLID },
@@ -30,9 +32,9 @@ const projectType = new GraphQLObjectType({
     description: { type: GraphQLString },
     status: { type: GraphQLString },
     client: {
-      type: clientType,
+      type: ClientType,
       resolve(parent, args) {
-        return clients.find((client) => client.id === parent.clientId);
+        return Client.findById(parent.clientId);
       },
     },
   }),
@@ -43,13 +45,13 @@ const RootQuery = new GraphQLObjectType({
   fields: {
     //Query for all projects
     projects: {
-      type: new GraphQLList(projectType),
+      type: new GraphQLList(ProjectType),
       resolve(parent, args) {
         return Project.find();
       },
     },
     project: {
-      type: projectType,
+      type: ProjectType,
       args: { id: { type: GraphQLID } },
       resolve(parent, args) {
         return Project.findById(args.id);
@@ -58,13 +60,13 @@ const RootQuery = new GraphQLObjectType({
 
     //Querying the clients
     clients: {
-      type: new GraphQLList(clientType),
+      type: new GraphQLList(ClientType),
       resolve(parent, args) {
         return Client.find();
       },
     },
     client: {
-      type: clientType,
+      type: ClientType,
       args: { id: { type: GraphQLID } },
       resolve(parent, args) {
         return Client.findById(args.id);
@@ -72,5 +74,79 @@ const RootQuery = new GraphQLObjectType({
     },
   },
 });
-
-module.exports = new GraphQLSchema({ query: RootQuery });
+//Mutations
+const mutation = new GraphQLObjectType({
+  name: "Mutation",
+  fields: {
+    //Adding a new client
+    addClient: {
+      type: ClientType,
+      args: {
+        name: { type: new GraphQLNonNull(GraphQLString) },
+        email: { type: new GraphQLNonNull(GraphQLString) },
+        phone: { type: new GraphQLNonNull(GraphQLString) },
+      },
+      resolve(parent, args) {
+        const newClient = new Client({
+          name: args.name,
+          email: args.email,
+          phone: args.phone,
+        });
+        return newClient.save();
+      },
+    },
+    //Deleting a client
+    deleteClient: {
+      type: ClientType,
+      args: {
+        id: { type: new GraphQLNonNull(GraphQLID) },
+      },
+      resolve(parent, args) {
+        return Client.findByIdAndDelete(args.id);
+      },
+    },
+    //Adding a new project
+    addProject: {
+      type: ProjectType,
+      args: {
+        name: { type: new GraphQLNonNull(GraphQLString) },
+        description: { type: new GraphQLNonNull(GraphQLString) },
+        status: {
+          type: new GraphQLEnumType({
+            name: "ProjectStatus",
+            values: {
+              new: { value: "Not Started" },
+              progress: { value: "In progress" },
+              completed: { value: "Completed" },
+            },
+          }),
+          defaultValue: "Not Started",
+        },
+        clientId: { type: new GraphQLNonNull(GraphQLID) },
+      },
+      resolve(parent, args) {
+        const newProject = new Project({
+          name: args.name,
+          description: args.description,
+          status: args.status,
+          clientId: args.clientId,
+        });
+        return newProject.save();
+      },
+    },
+    //Deleting a project
+    deleteProject: {
+      type: ProjectType,
+      args: {
+        id: { type: new GraphQLNonNull(GraphQLID) },
+      },
+      resolve(parent, args) {
+        return Project.findByIdAndDelete(args.id);
+      },
+    },
+  },
+});
+module.exports = new GraphQLSchema({
+  query: RootQuery,
+  mutation,
+});
