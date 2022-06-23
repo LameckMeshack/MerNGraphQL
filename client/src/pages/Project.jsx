@@ -4,6 +4,7 @@ import { GET_PROJECT } from "../queries/ProjectQueries";
 import { Spinner } from "../components/Spinner";
 import { ClientInfo } from "../components/ClientInfo";
 import { DeleteProjectBtn } from "../components/DeleteProjectBtn";
+import { EditProjectForm } from "../components/EditProjectForm";
 
 export const Project = () => {
   const { id } = useParams();
@@ -24,7 +25,8 @@ export const Project = () => {
           <p>{data.project.status}</p>
 
           <ClientInfo client={data.project.client} />
-          <DeleteProjectBtn />
+          <EditProjectForm project={data.project} />
+          <DeleteProjectBtn projectId={data.project.id} />
         </div>
       )}
     </>
